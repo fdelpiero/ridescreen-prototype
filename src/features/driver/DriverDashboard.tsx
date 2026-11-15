@@ -27,7 +27,7 @@ export function DriverDashboard({ driverId }: { driverId: string }) {
   useEffect(() => {
     if (data === null) {
       updateSession({ driverId: undefined })
-      navigate('/driver/login', { replace: true })
+      navigate('/login', { replace: true })
     }
   }, [data])
 

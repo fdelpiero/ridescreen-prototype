@@ -92,7 +92,7 @@ export function DriverSignup() {
         </button>
       </form>
       <p className="muted">
-        Already signed up? <Link to="/driver/login">Log in</Link>
+        Already signed up? <Link to="/login">Log in</Link>
       </p>
     </div>
   )

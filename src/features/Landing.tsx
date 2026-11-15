@@ -1,26 +1,13 @@
 import { useState } from 'react'
 import { Link, Notice } from '../components/ui'
 import { APP_NAME, APP_TAGLINE } from '../config'
-import { ready, resetDemo } from '../data'
-import { SAMPLE_DRIVER_ID } from '../data/seed'
-import { updateSession, useSession } from '../data/session'
-import { navigate } from '../lib/router'
+import { resetDemo } from '../data'
+import { useSession } from '../data/session'
 
 export function Landing() {
   const session = useSession()
   const [confirmReset, setConfirmReset] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
-
-  async function enterAsSampleDriver() {
-    await ready
-    updateSession({ driverId: SAMPLE_DRIVER_ID })
-    navigate('/driver')
-  }
-
-  function enterAsAdmin() {
-    updateSession({ admin: true })
-    navigate('/admin')
-  }
 
   async function reset() {
     await resetDemo()
@@ -52,14 +39,14 @@ export function Landing() {
                 <Link to="/driver/signup" className="btn btn-primary">
                   Sign up as a driver
                 </Link>
-                <Link to="/driver/login" className="btn">
+                <Link to="/login" className="btn">
                   Log in
                 </Link>
+                <p className="field-hint">
+                  Demo login: <code>driver</code> / <code>driver</code> (already activated)
+                </p>
               </>
             )}
-            <button type="button" className="btn btn-ghost" onClick={enterAsSampleDriver}>
-              Log in as the sample driver
-            </button>
           </div>
         </article>
 
@@ -67,10 +54,20 @@ export function Landing() {
           <h2>Admin</h2>
           <p className="muted">Approve drivers, upload ads, set how fast they rotate and review weekly reports.</p>
           <div className="stack-sm">
-            <button type="button" className="btn btn-primary" onClick={enterAsAdmin}>
-              {session.admin ? 'Open admin' : 'Enter as admin (demo)'}
-            </button>
-            <p className="field-hint">No password in the prototype. The real product has a secure admin login.</p>
+            {session.admin ? (
+              <Link to="/admin" className="btn btn-primary">
+                Open admin
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" className="btn btn-primary">
+                  Log in as admin
+                </Link>
+                <p className="field-hint">
+                  Demo login: <code>admin</code> / <code>admin</code>. The real product has a secure admin login.
+                </p>
+              </>
+            )}
           </div>
         </article>
 
@@ -78,17 +75,10 @@ export function Landing() {
           <h2>Tablet screen</h2>
           <p className="muted">What riders see in the back seat: the ad loop with a QR code for the offer.</p>
           <div className="stack-sm">
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => {
-                updateSession({ admin: true })
-                navigate('/player/preview')
-              }}
-            >
+            <Link to={session.admin ? '/player/preview' : '/login'} className="btn btn-primary">
               Preview the tablet screen
-            </button>
-            <p className="field-hint">Preview mode does not count towards any driver’s hours.</p>
+            </Link>
+            <p className="field-hint">Needs the admin login. Preview mode does not count towards any driver’s hours.</p>
           </div>
         </article>
       </section>
