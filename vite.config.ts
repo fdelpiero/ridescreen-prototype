@@ -9,6 +9,12 @@ const APP_NAME = 'RideScreen'
 export default defineConfig({
   // Relative base so the built app can be served from any folder or static host.
   base: './',
+  // Build stamp shown in the footer, so anyone can tell which version they are looking at.
+  define: {
+    __APP_BUILD__: JSON.stringify(
+      new Date().toLocaleString('en-AU', { timeZone: 'Australia/Sydney', dateStyle: 'medium', timeStyle: 'short' }),
+    ),
+  },
   plugins: [
     react(),
     VitePWA({

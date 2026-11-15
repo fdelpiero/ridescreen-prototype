@@ -98,7 +98,7 @@ function Shell({ session, children }: { session: Session; children: ReactNode })
         Prototype · data stays in this browser · don’t enter real personal details
       </div>
       <main className="container">{children}</main>
-      <footer className="footer">Prototype by Matelab.ai</footer>
+      <footer className="footer">Prototype by Matelab.ai · version {__APP_BUILD__}</footer>
     </div>
   )
 }
