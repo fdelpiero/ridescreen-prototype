@@ -92,6 +92,18 @@ describe.each([
     expect((await store.listAds()).map((item) => item.id)).toEqual(['custom', 'ad_sample_fitness'])
   })
 
+  it('refreshes only original sample artwork while preserving edited ads', async () => {
+    await store.markSeeded()
+    const oldImage = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg>Placeholder creative for the prototype</svg>')
+    await store.saveAd({ ...ad('ad_sample_finance', 1), advertiser: 'Sample Finance Broker', image: oldImage })
+    await store.saveAd({ ...ad('ad_sample_cafe', 2), advertiser: 'My café', image: 'data:image/png;base64,YQ==' })
+    await seedIfNeeded(store, '2026-11-15')
+    const ads = await store.listAds()
+    expect(ads.find((item) => item.id === 'ad_sample_finance')?.advertiser).toBe('Harbour Home Loans')
+    expect(ads.find((item) => item.id === 'ad_sample_finance')?.image).not.toBe(oldImage)
+    expect(ads.find((item) => item.id === 'ad_sample_cafe')?.image).toBe('data:image/png;base64,YQ==')
+  })
+
   it('clears everything on reset', async () => {
     await seedIfNeeded(store, '2026-11-15')
     await store.clearAll()

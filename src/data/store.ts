@@ -11,6 +11,7 @@ const SETTINGS = 'settings'
 const SEEDED = 'meta:seeded'
 const SAMPLE_ADS_V2 = 'meta:sample-ads-v2'
 const SAMPLE_PHOTOS_V2 = 'meta:sample-photos-v2'
+const SAMPLE_ARTWORK_V2 = 'meta:sample-artwork-v2'
 
 /**
  * Everything the screens know about persistence. The prototype backs it with the
@@ -43,6 +44,14 @@ export class DataStore {
 
   markSamplePhotosV2(): Promise<void> {
     return this.kv.set(SAMPLE_PHOTOS_V2, true)
+  }
+
+  async hasSampleArtworkV2(): Promise<boolean> {
+    return Boolean(await this.kv.get(SAMPLE_ARTWORK_V2))
+  }
+
+  markSampleArtworkV2(): Promise<void> {
+    return this.kv.set(SAMPLE_ARTWORK_V2, true)
   }
 
   // Drivers

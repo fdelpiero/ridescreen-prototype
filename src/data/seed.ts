@@ -83,6 +83,24 @@ export async function seedIfNeeded(store: DataStore, todayIso: string = today())
       }
       await store.markSampleAdsV2()
     }
+    if (!await store.hasSampleArtworkV2()) {
+      const originalNames: Record<string, string> = {
+        ad_sample_finance: 'Sample Finance Broker',
+        ad_sample_spirits: 'Sample Spirits Co.',
+        ad_sample_cafe: 'Sample Corner Café',
+      }
+      for (const existing of await store.listAds()) {
+        const sample = SAMPLE_ADS.find((ad) => ad.id === existing.id)
+        // Only replace the original built-in SVG; never overwrite a driver's uploaded image.
+        if (!sample || !originalNames[existing.id] || !existing.image.startsWith('data:image/svg+xml')) continue
+        let svg = ''
+        try { svg = decodeURIComponent(existing.image.slice(existing.image.indexOf(',') + 1)) } catch { continue }
+        if (!svg.includes('Placeholder creative for the prototype')) continue
+        await store.saveAd({ ...existing, image: sample.image,
+          advertiser: existing.advertiser === originalNames[existing.id] ? sample.advertiser : existing.advertiser })
+      }
+      await store.markSampleArtworkV2()
+    }
     if (!await store.hasSamplePhotosV2()) {
       for (const [id, photo] of [['drv_sample_active', activeTabletPhoto], ['drv_sample_pending', pendingTabletPhoto]] as const) {
         const driver = await store.getDriver(id)
@@ -160,6 +178,7 @@ export async function seedIfNeeded(store: DataStore, todayIso: string = today())
   await store.saveReport(report)
 
   await store.markSampleAdsV2()
+  await store.markSampleArtworkV2()
   await store.markSamplePhotosV2()
   await store.markSeeded()
 }
