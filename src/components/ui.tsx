@@ -39,7 +39,7 @@ export function CheckStatusPill({ status }: { status: CheckStatus }) {
 }
 
 const DECISION: Record<ReportDecision, { label: string; tone: Tone }> = {
-  pending: { label: 'Awaiting decision', tone: 'neutral' },
+  pending: { label: 'Awaiting approval', tone: 'neutral' },
   eligible: { label: 'Payment eligible', tone: 'ok' },
   not_eligible: { label: 'Not eligible', tone: 'bad' },
 }

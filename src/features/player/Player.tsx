@@ -1,3 +1,8 @@
+import financePhoto from '../../assets/demo/finance.jpg'
+import drinksPhoto from '../../assets/demo/drinks.jpg'
+import cafePhoto from '../../assets/demo/cafe.jpg'
+import burgerPhoto from '../../assets/demo/burger.jpg'
+import fitnessPhoto from '../../assets/demo/fitness.jpg'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { Link } from '../../components/ui'
@@ -18,6 +23,15 @@ const EMPTY_RETRY_MS = 30_000
  * The screen passengers see. `preview` lets the admin look at the loop without
  * a driver account and without logging any playback.
  */
+// Only the built-in sample photos receive this artwork; uploaded creatives stay untouched.
+const SAMPLE_BRANDS: Record<string, { name: string; headline: string; category: string; theme: string }> = {
+  [financePhoto]: { name: 'HARBOUR HOME LOANS', headline: 'Your next chapter starts at home.', category: 'HOME LOANS, MADE HUMAN', theme: 'finance' },
+  [drinksPhoto]: { name: 'SUNSET SPRITZ', headline: 'A little sunshine in every sip.', category: 'BRING ON THE GOOD TIMES', theme: 'drinks' },
+  [burgerPhoto]: { name: 'THE BURGER YARD', headline: 'Big flavour. No shortcuts.', category: 'MADE FOR YOUR CRAVINGS', theme: 'burger' },
+  [fitnessPhoto]: { name: 'COASTLINE FITNESS', headline: 'Find your kind of strong.', category: 'MOVE WITH US', theme: 'fitness' },
+  [cafePhoto]: { name: 'CORNER & CO.', headline: 'Good coffee. Great mornings.', category: 'YOUR NEIGHBOURHOOD CAFÉ', theme: 'cafe' },
+}
+
 export function Player({ preview }: { preview: boolean }) {
   const session = useSession()
   const driverId = preview ? undefined : session.driverId
@@ -270,9 +284,16 @@ function PlayerScreen({
     <div className="player">
       <div className="player-stage">
         {ads.map((ad, i) => (
-          <div key={ad.id} className={`slide ${i === index ? 'slide-current' : ''}`} aria-hidden={i !== index}>
+          <div key={ad.id} className={`slide ${i === index ? 'slide-current' : ''} ${ad.id.startsWith('ad_sample_') ? 'slide-sample' : ''}`} aria-hidden={i !== index}>
             <img src={ad.image} alt="" className="slide-backdrop" />
             <img src={ad.image} alt={`${ad.advertiser}: ${ad.offer}`} className="slide-image" />
+            {SAMPLE_BRANDS[ad.image] && (
+              <div className={`sample-branding sample-branding-${SAMPLE_BRANDS[ad.image].theme}`}>
+                <span className="sample-brand-category">{SAMPLE_BRANDS[ad.image].category}</span>
+                <span className="sample-brand-headline">{SAMPLE_BRANDS[ad.image].headline}</span>
+                <span className="sample-brand-name">{SAMPLE_BRANDS[ad.image].name}</span>
+              </div>
+            )}
           </div>
         ))}
         <div className="player-badges">

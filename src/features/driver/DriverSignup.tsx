@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Field, Link, Notice } from '../../components/ui'
 import { ready, store } from '../../data'
-import { updateSession } from '../../data/session'
+import { setSession } from '../../data/session'
 import { isValidAbn, normaliseAbn } from '../../lib/abn'
 import { newDriverCode, newId } from '../../lib/ids'
 import { hashPassword, newSalt } from '../../lib/password'
@@ -55,7 +55,7 @@ export function DriverSignup() {
         createdAt: new Date().toISOString(),
       }
       await store.saveDriver(driver)
-      updateSession({ driverId: driver.id })
+      setSession({ driverId: driver.id })
       navigate('/driver')
     } catch (err) {
       setErrors({ form: err instanceof Error ? err.message : 'Could not create the account' })

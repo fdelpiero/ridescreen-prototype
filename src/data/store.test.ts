@@ -71,7 +71,7 @@ describe.each([
   it('seeds the demo once, with a sample report the rules accept', async () => {
     await seedIfNeeded(store, '2026-11-15')
     await seedIfNeeded(store, '2026-11-15')
-    expect(await store.listAds()).toHaveLength(3)
+    expect(await store.listAds()).toHaveLength(5)
     const drivers = await store.listDrivers()
     expect(drivers.map((d) => d.status).sort()).toEqual(['active', 'pending_review'])
     const reports = await store.listReports()
@@ -80,6 +80,16 @@ describe.each([
     expect(reports[0].check.status).toBe('consistent')
     expect(reports[0].playbackHours).toBeCloseTo(1900 / 60)
     expect(await store.listReportsForDriver('drv_sample_pending')).toHaveLength(0)
+  })
+
+  it('adds the new samples once to an existing demo without overwriting its ads', async () => {
+    await store.markSeeded()
+    await store.saveAd(ad('custom', 9))
+    await seedIfNeeded(store, '2026-11-15')
+    expect((await store.listAds()).map((item) => item.id)).toEqual(['custom', 'ad_sample_burger', 'ad_sample_fitness'])
+    await store.deleteAd('ad_sample_burger')
+    await seedIfNeeded(store, '2026-11-15')
+    expect((await store.listAds()).map((item) => item.id)).toEqual(['custom', 'ad_sample_fitness'])
   })
 
   it('clears everything on reset', async () => {

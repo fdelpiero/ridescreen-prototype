@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { ChangeEvent } from 'react'
-import { CheckStatusPill, DecisionPill, DriverStatusPill, Link, LoadError, Loading, Notice } from '../../components/ui'
+import { CheckStatusPill, DecisionPill, DriverStatusPill, Link, LoadError, Loading, Notice, Pill } from '../../components/ui'
 import { store } from '../../data'
+import { SAMPLE_DRIVER_ID } from '../../data/seed'
 import { updateSession } from '../../data/session'
 import { formatAbn } from '../../lib/abn'
-import { formatWeek, mondayOf, today } from '../../lib/dates'
+import { addDays, formatWeek, lastCompleteWeekStart, mondayOf, today } from '../../lib/dates'
 import { imageToDataUrl } from '../../lib/files'
 import { formatAud, formatHours } from '../../lib/format'
 import { navigate } from '../../lib/router'
@@ -65,6 +66,40 @@ export function DriverDashboard({ driverId }: { driverId: string }) {
       ) : (
         <Activation driver={driver} onChange={reload} />
       )}
+
+      <section className="card stack" aria-labelledby="payment-status-heading">
+        <div>
+          <h2 id="payment-status-heading">Weekly payment status</h2>
+          <p className="muted">See the payment status for your most recently submitted week.</p>
+        </div>
+        {reports.length === 0 ? (
+          <p>No report submitted yet. Send a weekly report to start the review.</p>
+        ) : (
+          <div className="row row-wrap row-between">
+            <div>
+              <strong>Week of {formatWeek(reports[0].weekStart)}</strong>
+              <p className="muted">
+                {reports[0].decision === 'eligible'
+                  ? `Eligible for the current sample amount of ${formatAud(settings.weeklyPaymentAud)}.`
+                  : reports[0].decision === 'not_eligible'
+                    ? 'This week was marked not eligible. Contact the team if you have questions.'
+                    : 'Your report is awaiting approval.'}
+              </p>
+            </div>
+            <DecisionPill decision={reports[0].decision} />
+          </div>
+        )}
+        {driver.id === SAMPLE_DRIVER_ID && (
+          <div className="row row-wrap row-between">
+            <div>
+              <strong>Week of {formatWeek(addDays(reports[0]?.weekStart ?? lastCompleteWeekStart(today()), -7))}</strong>
+              <p className="muted">$250 AUD · Example payment for the demo</p>
+            </div>
+            <Pill tone="ok">Payment made</Pill>
+          </div>
+        )}
+        <p className="muted">Prototype only: eligibility is shown here, but no payment is sent or tracked.</p>
+      </section>
 
       {active && (
         <section className="card stack">

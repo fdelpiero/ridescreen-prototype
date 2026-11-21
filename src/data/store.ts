@@ -9,6 +9,8 @@ const REPORT = 'report:'
 const PLAYBACK = 'playback:'
 const SETTINGS = 'settings'
 const SEEDED = 'meta:seeded'
+const SAMPLE_ADS_V2 = 'meta:sample-ads-v2'
+const SAMPLE_PHOTOS_V2 = 'meta:sample-photos-v2'
 
 /**
  * Everything the screens know about persistence. The prototype backs it with the
@@ -25,6 +27,22 @@ export class DataStore {
   private async list<T>(prefix: string): Promise<T[]> {
     const all = await this.kv.entries()
     return all.filter(([key]) => key.startsWith(prefix)).map(([, value]) => value as T)
+  }
+
+  async hasSampleAdsV2(): Promise<boolean> {
+    return Boolean(await this.kv.get(SAMPLE_ADS_V2))
+  }
+
+  markSampleAdsV2(): Promise<void> {
+    return this.kv.set(SAMPLE_ADS_V2, true)
+  }
+
+  async hasSamplePhotosV2(): Promise<boolean> {
+    return Boolean(await this.kv.get(SAMPLE_PHOTOS_V2))
+  }
+
+  markSamplePhotosV2(): Promise<void> {
+    return this.kv.set(SAMPLE_PHOTOS_V2, true)
   }
 
   // Drivers
