@@ -10,7 +10,7 @@ const PLAYBACK = 'playback:'
 const SETTINGS = 'settings'
 const SEEDED = 'meta:seeded'
 const SAMPLE_ADS_V2 = 'meta:sample-ads-v2'
-const SAMPLE_PHOTOS_V2 = 'meta:sample-photos-v2'
+const SAMPLE_PHOTOS_V2 = 'meta:sample-photos-v3'
 const SAMPLE_ARTWORK_V2 = 'meta:sample-artwork-v2'
 
 /**

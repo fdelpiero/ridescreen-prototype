@@ -104,9 +104,12 @@ export async function seedIfNeeded(store: DataStore, todayIso: string = today())
     if (!await store.hasSamplePhotosV2()) {
       for (const [id, photo] of [['drv_sample_active', activeTabletPhoto], ['drv_sample_pending', pendingTabletPhoto]] as const) {
         const driver = await store.getDriver(id)
-        if (driver?.isSample && driver.tabletPhoto === originalTabletPhoto) {
-          await store.saveDriver({ ...driver, tabletPhoto: photo })
+        if (!driver?.isSample || !driver.tabletPhoto) continue
+        let original = driver.tabletPhoto === originalTabletPhoto || /\/tablet-mounted(?:-[A-Za-z0-9_-]+)?\.jpg(?:[?#].*)?$/.test(driver.tabletPhoto)
+        if (driver.tabletPhoto.startsWith('data:image/svg+xml')) {
+          try { original = decodeURIComponent(driver.tabletPhoto.slice(driver.tabletPhoto.indexOf(',') + 1)).includes('Sample photo: tablet mounted on the seat back') } catch { original = false }
         }
+        if (original) await store.saveDriver({ ...driver, tabletPhoto: photo })
       }
       await store.markSamplePhotosV2()
     }
