@@ -21,7 +21,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,jpg,webmanifest}'],
       },
       manifest: {
         name: `${APP_NAME} (prototype)`,

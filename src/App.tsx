@@ -2,10 +2,11 @@ import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from './components/ui'
 import { APP_NAME } from './config'
-import { clearSession, useSession } from './data/session'
+import { clearSession, setSession, useSession } from './data/session'
 import type { Session } from './data/session'
 import { Landing } from './features/Landing'
 import { AdminLayout } from './features/admin/AdminLayout'
+import { DriverAccount } from './features/driver/DriverAccount'
 import { DriverDashboard } from './features/driver/DriverDashboard'
 import { Login } from './features/Login'
 import { DriverReport } from './features/driver/DriverReport'
@@ -17,7 +18,17 @@ const ADMIN_ROUTES = ['/admin', '/admin/drivers', '/admin/ads', '/admin/reports'
 
 export default function App() {
   const route = useRoute()
-  const session = useSession()
+  const savedSession = useSession()
+  // Older prototypes allowed both roles at once. Keep only the role matching
+  // the current screen so an old browser session cannot expose both menus.
+  const hasBothRoles = Boolean(savedSession.driverId && savedSession.admin)
+  const session: Session = hasBothRoles
+    ? (route.startsWith('/admin') || route === '/player/preview' ? { admin: true } : { driverId: savedSession.driverId })
+    : savedSession
+
+  useEffect(() => {
+    if (hasBothRoles) setSession(session.admin ? { admin: true } : { driverId: session.driverId })
+  }, [hasBothRoles, session.admin, session.driverId])
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -37,6 +48,9 @@ function page(route: string, session: Session): ReactNode {
   if (route === '/login' || route === '/driver/login') return <Login />
   if (route === '/driver') {
     return session.driverId ? <DriverDashboard driverId={session.driverId} /> : <Redirect to="/login" />
+  }
+  if (route === '/driver/account') {
+    return session.driverId ? <DriverAccount driverId={session.driverId} /> : <Redirect to="/login" />
   }
   if (route === '/driver/report') {
     return session.driverId ? <DriverReport driverId={session.driverId} /> : <Redirect to="/login" />
@@ -83,7 +97,7 @@ function Shell({ session, children }: { session: Session; children: ReactNode })
             {APP_NAME}
           </Link>
           <nav className="topnav" aria-label="Main">
-            {session.driverId && <Link to="/driver">Driver</Link>}
+            {session.driverId && <><Link to="/driver">Driver</Link><Link to="/driver/account">Account</Link></>}
             {session.admin && <Link to="/admin">Admin</Link>}
             {!signedIn && <Link to="/login">Log in</Link>}
             {signedIn && (

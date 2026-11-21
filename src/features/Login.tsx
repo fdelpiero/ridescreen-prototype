@@ -3,13 +3,13 @@ import type { FormEvent } from 'react'
 import { Field, Link, Notice } from '../components/ui'
 import { ready, store } from '../data'
 import { DEMO_ACCOUNTS, matchDemoAccount } from '../data/demoAccounts'
-import { updateSession } from '../data/session'
+import { SAMPLE_DRIVER_ID } from '../data/seed'
+import { setSession } from '../data/session'
 import { hashPassword } from '../lib/password'
 import { navigate } from '../lib/router'
 
 // One login for everyone: the demo accounts (admin / driver) or a driver's own
-// email and password from sign-up. Signed-in roles add up, so one browser can
-// switch between driver and admin during a walk-through without logging out.
+// email and password from sign-up. Each login replaces the previous role.
 export function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -22,9 +22,17 @@ export function Login() {
     setBusy(true)
     try {
       await ready
+      if (username.trim().toLowerCase() === 'driver') {
+        const sample = await store.getDriver(SAMPLE_DRIVER_ID)
+        const matches = sample && (sample.passHash ? await hashPassword(password, sample.passSalt) === sample.passHash : password === 'driver')
+        if (!matches) { setError('Username or password is not right.'); return }
+        setSession({ driverId: SAMPLE_DRIVER_ID })
+        navigate('/driver')
+        return
+      }
       const demo = matchDemoAccount(username, password)
       if (demo) {
-        updateSession(demo.session)
+        setSession(demo.session)
         navigate('admin' in demo.session ? '/admin' : '/driver')
         return
       }
@@ -35,7 +43,7 @@ export function Login() {
         setError('Username or password is not right.')
         return
       }
-      updateSession({ driverId: driver.id })
+      setSession({ driverId: driver.id })
       navigate('/driver')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not log in')
@@ -75,7 +83,7 @@ export function Login() {
             </li>
           ))}
         </ul>
-        <p className="field-hint">Drivers who sign up log in with their own email and password, saved in this browser.</p>
+        <p className="field-hint">The sample driver password is driver until changed in Account or the demo is reset. Signed-up drivers use their own email and password in this browser.</p>
       </div>
       <p className="muted">
         New driver? <Link to="/driver/signup">Sign up</Link>
