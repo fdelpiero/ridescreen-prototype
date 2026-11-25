@@ -11,17 +11,20 @@ import { formatAud, formatHours } from '../../lib/format'
 import { navigate } from '../../lib/router'
 import { useLoad } from '../../lib/useLoad'
 import type { Driver } from '../../types'
+import { TabletActivity } from './TabletActivity'
 
 export function DriverDashboard({ driverId }: { driverId: string }) {
   const { data, error, reload } = useLoad(async () => {
     const driver = await store.getDriver(driverId)
     if (!driver) return null
-    const [reports, settings, weekHours] = await Promise.all([
+    const [reports, settings, weekHours, tabletSessions, playback] = await Promise.all([
       store.listReportsForDriver(driverId),
       store.getSettings(),
       store.playbackHoursForWeek(driverId, mondayOf(today())),
+      store.listTabletSessionsForDriver(driverId),
+      store.getPlayback(driverId),
     ])
-    return { driver, reports, settings, weekHours }
+    return { driver, reports, settings, weekHours, tabletSessions, playback }
   }, driverId)
 
   // The driver was removed (demo reset in another tab): drop the stale login.
@@ -34,7 +37,7 @@ export function DriverDashboard({ driverId }: { driverId: string }) {
 
   if (error) return <LoadError message={error} />
   if (!data) return <Loading />
-  const { driver, reports, settings, weekHours } = data
+  const { driver, reports, settings, weekHours, tabletSessions, playback } = data
   const active = driver.status === 'active'
 
   return (
@@ -60,12 +63,14 @@ export function DriverDashboard({ driverId }: { driverId: string }) {
             <Link to="/player" className="btn btn-primary btn-large">
               Start showing ads
             </Link>
-            <span className="muted">Tablet on this week: {formatHours(weekHours)}</span>
+            <span className="muted">Ads displayed this week: {formatHours(weekHours)}</span>
           </div>
         </section>
       ) : (
         <Activation driver={driver} onChange={reload} />
       )}
+
+      <TabletActivity sessions={tabletSessions} playback={playback} />
 
       <section className="card stack" aria-labelledby="payment-status-heading">
         <div>
@@ -124,7 +129,7 @@ export function DriverDashboard({ driverId }: { driverId: string }) {
                   <div>
                     <strong>{formatWeek(report.weekStart)}</strong>
                     <div className="muted">
-                      {formatHours(report.hoursOnTrip)} on trips · tablet on {formatHours(report.playbackHours)}
+                      {formatHours(report.hoursOnTrip)} Uber Active · ads displayed {formatHours(report.playbackHours)}
                     </div>
                   </div>
                   <div className="row row-wrap">

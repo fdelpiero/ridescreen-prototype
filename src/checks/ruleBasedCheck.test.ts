@@ -42,10 +42,10 @@ describe('evaluateReport', () => {
     expect(run({}, { playbackHours: 15 }).status).toBe('needs_review')
   })
 
-  it('flags a mismatch when the tablet was off for most of the driving', () => {
+  it('flags a large difference between the weekly totals', () => {
     const result = run({}, { playbackHours: 5 })
     expect(result.status).toBe('mismatch')
-    expect(result.findings.some((f) => f.level === 'fail' && f.text.includes('tablet was off'))).toBe(true)
+    expect(result.findings.some((f) => f.level === 'fail' && f.text.includes('weekly totals differ'))).toBe(true)
   })
 
   it('fails when trip hours exceed online hours', () => {

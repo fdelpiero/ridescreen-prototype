@@ -1,12 +1,13 @@
 import { DEFAULT_SETTINGS } from '../config'
 import { weekDates } from '../lib/dates'
-import type { Ad, Driver, PlaybackLog, Settings, WeeklyReport } from '../types'
+import type { Ad, Driver, PlaybackLog, Settings, TabletSession, WeeklyReport } from '../types'
 import type { KV } from './kv'
 
 const DRIVER = 'driver:'
 const AD = 'ad:'
 const REPORT = 'report:'
 const PLAYBACK = 'playback:'
+const TABLET_SESSION = 'tablet-session:'
 const SETTINGS = 'settings'
 const SEEDED = 'meta:seeded'
 const SAMPLE_ADS_V2 = 'meta:sample-ads-v2'
@@ -124,6 +125,17 @@ export class DataStore {
 
   saveReport(report: WeeklyReport): Promise<void> {
     return this.kv.set(REPORT + report.id, report)
+  }
+
+  // Each session is stored separately so multiple shifts on one day remain distinct.
+  saveTabletSession(session: TabletSession): Promise<void> {
+    return this.kv.set(TABLET_SESSION + session.id, session)
+  }
+
+  async listTabletSessionsForDriver(driverId: string): Promise<TabletSession[]> {
+    return (await this.list<TabletSession>(TABLET_SESSION))
+      .filter((session) => session.driverId === driverId)
+      .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
   }
 
   // Playback log

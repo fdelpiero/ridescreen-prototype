@@ -13,7 +13,7 @@ export const DEFAULT_SETTINGS = {
 }
 
 // How often the player records "ads were on screen" for the logged-in driver.
-export const HEARTBEAT_MS = 60_000
+export const HEARTBEAT_MS = 5_000
 
 // Upload limits keep the browser database small on cheap tablets.
 export const IMAGE_MAX_DIMENSION = 1600

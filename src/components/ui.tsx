@@ -102,7 +102,7 @@ export function CheckSummary({ check }: { check: CheckResult }) {
       <div className="row row-wrap">
         <CheckStatusPill status={check.status} />
         {check.coverage !== null && (
-          <span className="muted">Tablet was on for {formatPercent(check.coverage)} of trip hours</span>
+          <span className="muted">Ad display time is {formatPercent(check.coverage)} of Uber Active time (weekly totals)</span>
         )}
       </div>
       <ul className="findings">
@@ -117,7 +117,7 @@ export function CheckSummary({ check }: { check: CheckResult }) {
       </ul>
       <p className="field-hint">
         {check.method === 'rules-demo'
-          ? 'Demo check: fixed rules that compare the numbers you entered with the tablet’s own log. It does not read the uploaded file yet.'
+          ? 'Demo check: fixed rules that compare the numbers you entered with the tablet’s own log. It does not read the uploaded file or verify that ads ran during trips.'
           : 'Checked by the AI document reader.'}
       </p>
     </div>

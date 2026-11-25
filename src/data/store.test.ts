@@ -33,6 +33,17 @@ describe.each([
     expect(await store.getDriver('missing')).toBeUndefined()
   })
 
+  it('records multiple tablet sessions and keeps each driver’s history separate', async () => {
+    await store.saveTabletSession({ id: 'one', driverId: 'a', startedAt: '2026-11-23T08:00:00Z' })
+    await store.saveTabletSession({ id: 'one', driverId: 'a', startedAt: '2026-11-23T08:00:00Z', endedAt: '2026-11-23T09:00:00Z' })
+    await store.saveTabletSession({ id: 'two', driverId: 'a', startedAt: '2026-11-23T10:00:00Z' })
+    await store.saveTabletSession({ id: 'other', driverId: 'b', startedAt: '2026-11-23T11:00:00Z' })
+    const sessions = await store.listTabletSessionsForDriver('a')
+    expect(sessions.map((s) => s.id)).toEqual(['two', 'one'])
+    expect(sessions[0].endedAt).toBeUndefined()
+    expect(sessions[1].endedAt).toBe('2026-11-23T09:00:00Z')
+  })
+
   it('keeps ads in order, reorders and deletes them', async () => {
     await store.saveAd(ad('x', 1))
     await store.saveAd(ad('y', 2))

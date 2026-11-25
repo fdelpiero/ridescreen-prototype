@@ -9,11 +9,12 @@ import { Link } from '../../components/ui'
 import { APP_NAME, HEARTBEAT_MS } from '../../config'
 import { store } from '../../data'
 import { useSession } from '../../data/session'
-import { today } from '../../lib/dates'
+import { newId } from '../../lib/ids'
+import { visiblePlaybackSegments } from '../../lib/playback'
 import { buildOfferUrl } from '../../lib/qr'
 import { navigate } from '../../lib/router'
 import { useLoad } from '../../lib/useLoad'
-import type { Ad } from '../../types'
+import type { Ad, TabletSession } from '../../types'
 import { activeAdsInOrder } from './rotation'
 
 const EXIT_HOLD_MS = 2000
@@ -157,6 +158,8 @@ function PlayerScreen({
 }) {
   const [started, setStarted] = useState(false)
   const [tick, setTick] = useState(0)
+  const [logError, setLogError] = useState('')
+  const sessionWrite = useRef<Promise<TabletSession> | null>(null)
   const [qrImages, setQrImages] = useState<Record<string, string>>({})
   const online = useOnline()
   const wakeLockSupported = 'wakeLock' in navigator
@@ -227,17 +230,46 @@ function PlayerScreen({
     }
   }, [started])
 
-  // Proof of play: one minute logged for each minute the ads were really on screen.
+  // Count only short intervals while this ad screen is visible; skip suspended gaps.
+  const flushPlayback = useRef<() => Promise<void>>(() => Promise.resolve())
   useEffect(() => {
     if (!started || !logDriverId) return
-    const id = window.setInterval(() => {
-      if (document.visibilityState !== 'visible') return
-      store.addPlaybackMinutes(logDriverId, today(), HEARTBEAT_MS / 60_000).catch(() => {})
-    }, HEARTBEAT_MS)
-    return () => window.clearInterval(id)
+    let last = Date.now()
+    let wasVisible = document.visibilityState === 'visible'
+    const flush = () => {
+      const now = Date.now()
+      const segments = wasVisible ? visiblePlaybackSegments(last, now) : []
+      last = now
+      return Promise.all(segments.map(({ date, minutes }) => store.addPlaybackMinutes(logDriverId, date, minutes))).then(() => {})
+    }
+    flushPlayback.current = flush
+    const track = () => { flush().catch(() => setLogError('Could not save ad display time on this device.')) }
+    const onVisibility = () => {
+      track()
+      wasVisible = document.visibilityState === 'visible'
+    }
+    const id = window.setInterval(track, HEARTBEAT_MS)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisibility)
+      flushPlayback.current = () => Promise.resolve()
+    }
   }, [started, logDriverId])
 
-  const exit = useCallback(() => {
+  const exit = useCallback(async () => {
+    const endTime = new Date().toISOString()
+    try {
+      await flushPlayback.current()
+      if (sessionWrite.current) {
+        const session = await sessionWrite.current
+        await store.saveTabletSession({ ...session, endedAt: endTime })
+        sessionWrite.current = null
+      }
+    } catch {
+      setLogError('The end time could not be saved. Please try leaving again.')
+      return
+    }
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
     navigate(exitTo)
   }, [exitTo])
@@ -265,13 +297,21 @@ function PlayerScreen({
   }, [])
   const beginHold = () => {
     cancelHold()
-    holdTimer.current = window.setTimeout(exit, EXIT_HOLD_MS)
+    holdTimer.current = window.setTimeout(() => { void exit() }, EXIT_HOLD_MS)
   }
   useEffect(() => cancelHold, [cancelHold])
 
   function start() {
     // Start the ads first. Full screen is a nice-to-have: some browsers refuse the
     // request and some never answer it, and neither should hold up the loop.
+    if (logDriverId && !sessionWrite.current) {
+      const session: TabletSession = { id: newId('tablet'), driverId: logDriverId, startedAt: new Date().toISOString() }
+      sessionWrite.current = store.saveTabletSession(session).then(() => session)
+      sessionWrite.current.catch(() => {
+        sessionWrite.current = null
+        setLogError('The start time could not be saved. Return to the dashboard and try again.')
+      })
+    }
     setStarted(true)
     try {
       document.documentElement.requestFullscreen?.().catch(() => {})
@@ -299,6 +339,7 @@ function PlayerScreen({
         <div className="player-badges">
           {!logDriverId && <span className="player-badge">Preview · playback is not logged</span>}
           {!online && <span className="player-badge">Offline · ads still playing</span>}
+          {logError && <span className="player-badge" role="alert">{logError}</span>}
         </div>
       </div>
 

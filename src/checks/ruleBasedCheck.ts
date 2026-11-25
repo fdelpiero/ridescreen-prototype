@@ -63,16 +63,16 @@ export function evaluateReport(input: ReportCheckInput, context: ReportCheckCont
     }
 
     if (input.hoursOnTrip > input.hoursOnline) {
-      fail('Hours on trips are higher than hours online.')
+      fail('Active time is higher than online time.')
     } else if (input.hoursOnline <= HOURS_IN_WEEK) {
-      ok('Hours on trips fit within hours online.')
+      ok('Active time fits within online time.')
     }
 
     if (input.hoursOnTrip === 0) {
-      warn('No hours on trips were reported, so no passengers saw ads.')
+      warn('No Active time was reported, so a comparison is not available.')
     } else {
       if (input.trips === 0) {
-        warn('Hours on trips were reported but no trips.')
+        warn('Active time was reported but no trips.')
       } else {
         const avgMinutes = (input.hoursOnTrip * 60) / input.trips
         if (avgMinutes < MIN_AVG_TRIP_MINUTES || avgMinutes > MAX_AVG_TRIP_MINUTES) {
@@ -81,10 +81,10 @@ export function evaluateReport(input: ReportCheckInput, context: ReportCheckCont
       }
 
       coverage = context.playbackHours / input.hoursOnTrip
-      const summary = `The tablet showed ads for ${oneDecimal(context.playbackHours)} h against ${oneDecimal(input.hoursOnTrip)} h on trips (${Math.round(coverage * 100)}%).`
+      const summary = `The tablet showed ads for ${oneDecimal(context.playbackHours)} h against ${oneDecimal(input.hoursOnTrip)} h of Uber Active time (${Math.round(coverage * 100)}%).`
       if (coverage >= COVERAGE_OK) ok(summary)
-      else if (coverage >= COVERAGE_REVIEW) warn(`${summary} Some trips ran without ads on screen.`)
-      else fail(`${summary} The tablet was off for most of the driving.`)
+      else if (coverage >= COVERAGE_REVIEW) warn(`${summary} Review the difference between the weekly totals.`)
+      else fail(`${summary} The weekly totals differ significantly; review the report.`)
     }
   }
 

@@ -7,6 +7,8 @@ import { addDays, formatWeek, lastCompleteWeekStart, mondayOf, today, weekDates 
 import { formatBytes, readAsDataUrl, reportFileType } from '../../lib/files'
 import { formatHours } from '../../lib/format'
 import { newId } from '../../lib/ids'
+import { parseReportHours } from '../../lib/reportTime'
+import { formatPlaybackMinutes } from '../../lib/playback'
 import { useLoad } from '../../lib/useLoad'
 import type { WeeklyReport } from '../../types'
 
@@ -76,7 +78,7 @@ export function DriverReport({ driverId }: { driverId: string }) {
           <div>
             <strong>{formatWeek(submitted.weekStart)}</strong>
             <div className="muted">
-              {formatHours(submitted.hoursOnline)} online · {formatHours(submitted.hoursOnTrip)} on trips · {submitted.trips} trips
+              {formatPlaybackMinutes(submitted.hoursOnline * 60)} online · {formatPlaybackMinutes(submitted.hoursOnTrip * 60)} active · {submitted.trips} trips
             </div>
           </div>
           <CheckSummary check={submitted.check} />
@@ -97,15 +99,15 @@ export function DriverReport({ driverId }: { driverId: string }) {
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (!driver) return
-    const online = parseAmount(hoursOnline)
-    const onTrip = parseAmount(hoursOnTrip)
+    const online = parseReportHours(hoursOnline)
+    const onTrip = parseReportHours(hoursOnTrip)
     const tripCount = parseAmount(trips)
     const fileType = file ? reportFileType(file.name, file.type) : ''
 
     const next: Errors = {}
     if (submittedWeeks.includes(weekStart)) next.week = 'You already sent a report for this week'
-    if (online === null) next.hoursOnline = 'Enter the hours online from your report'
-    if (onTrip === null) next.hoursOnTrip = 'Enter the hours on trips from your report'
+    if (online === null) next.hoursOnline = 'Enter Online time, for example 15:44'
+    if (onTrip === null) next.hoursOnTrip = 'Enter Active time, for example 13:20'
     if (tripCount === null || !Number.isInteger(tripCount)) next.trips = 'Enter the number of trips as a whole number'
     if (!file) next.file = 'Attach your weekly report'
     else if (!REPORT_ACCEPTED_TYPES.includes(fileType)) next.file = 'Use a PDF, a screenshot (PNG or JPG) or a CSV file'
@@ -173,7 +175,7 @@ export function DriverReport({ driverId }: { driverId: string }) {
     <div className="narrow stack">
       <div>
         <h1>Send weekly report</h1>
-        <p className="muted">Copy the totals from your Uber weekly summary and attach the report itself.</p>
+        <p className="muted">Copy Online time, Active time and trips from your Uber weekly summary, then attach the screenshot. The file is not read automatically.</p>
       </div>
 
       <form className="card stack" onSubmit={submit} noValidate>
@@ -194,17 +196,23 @@ export function DriverReport({ driverId }: { driverId: string }) {
 
         <Notice>
           Your tablet logged <strong>{formatHours(playbackHours)}</strong> of ads on screen in this week. The check compares
-          this with your hours on trips.
+          this with the Active time you enter below. Weekly totals do not prove the ads played during trips.
         </Notice>
 
         <div className="grid-2">
-          <Field label="Hours online" error={errors.hoursOnline}>
-            <input value={hoursOnline} onChange={(e) => setHoursOnline(e.target.value)} inputMode="decimal" placeholder="e.g. 38.5" />
+          <Field label="Online time" hint="From the Uber screenshot: hours:minutes or decimal hours." error={errors.hoursOnline}>
+            <input value={hoursOnline} onChange={(e) => setHoursOnline(e.target.value)} inputMode="text" placeholder="e.g. 15:44" />
           </Field>
-          <Field label="Hours on trips" error={errors.hoursOnTrip}>
-            <input value={hoursOnTrip} onChange={(e) => setHoursOnTrip(e.target.value)} inputMode="decimal" placeholder="e.g. 31" />
+          <Field label="Active time" hint="Copy the Active figure shown by Uber." error={errors.hoursOnTrip}>
+            <input value={hoursOnTrip} onChange={(e) => setHoursOnTrip(e.target.value)} inputMode="text" placeholder="e.g. 13:20" />
           </Field>
         </div>
+        {parseReportHours(hoursOnTrip) !== null && parseReportHours(hoursOnTrip)! > 0 && (
+          <Notice>
+            <strong>Weekly comparison:</strong> {formatPlaybackMinutes(playbackHours * 60)} of ads displayed ÷ {formatPlaybackMinutes(parseReportHours(hoursOnTrip)! * 60)} Uber Active time = {Math.round(playbackHours / parseReportHours(hoursOnTrip)! * 100)}%.
+            This compares totals only; it does not establish when trips occurred. Approval is a separate decision.
+          </Notice>
+        )}
         <Field label="Number of trips" error={errors.trips}>
           <input value={trips} onChange={(e) => setTrips(e.target.value)} inputMode="numeric" placeholder="e.g. 92" />
         </Field>

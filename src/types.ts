@@ -67,3 +67,11 @@ export interface WeeklyReport {
 
 /** Minutes of ad playback per local calendar day, keyed YYYY-MM-DD. */
 export type PlaybackLog = Record<string, number>
+
+/** A tablet player session; missing endedAt means an end was not recorded. */
+export interface TabletSession {
+  id: string
+  driverId: string
+  startedAt: string
+  endedAt?: string
+}

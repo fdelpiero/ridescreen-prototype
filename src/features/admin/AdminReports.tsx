@@ -23,7 +23,7 @@ export function AdminReports() {
       <div>
         <h1>Weekly reports</h1>
         <p className="muted">
-          The check is a first pass. You make the final call on whether a week is paid ({formatAud(settings.weeklyPaymentAud)}{' '}
+          The check compares weekly totals; it does not verify trip-by-trip overlap or read the uploaded file. You make the final call on whether a week is paid ({formatAud(settings.weeklyPaymentAud)}{' '}
           per eligible week, sample figure). No money moves in this prototype.
         </p>
       </div>
@@ -60,7 +60,7 @@ function ReportCard({ report, driverLabel, onChange }: { report: WeeklyReport; d
           <dd>{formatHours(report.hoursOnline)}</dd>
         </div>
         <div>
-          <dt>Hours on trips</dt>
+          <dt>Uber Active time</dt>
           <dd>{formatHours(report.hoursOnTrip)}</dd>
         </div>
         <div>
